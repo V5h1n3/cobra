@@ -175,116 +175,128 @@ class Parse:
         参数是否可控
         :return:
         """
+
+		"""
         param_name = re.findall(self.rule, self.code)
-        if len(param_name) == 1:
-            param_name = param_name[0].strip()
-            param_name = re.escape(param_name)
-            self.param_name = param_name
-            logging.debug('参数: `{0}`'.format(param_name))
-            # 固定字符串判断
-            regex_string = self.regex[self.language]['string']
-            string = re.findall(regex_string, param_name)
-            if len(string) >= 1 and string[0] != '':
-                logging.debug("是否字符串: 是")
-                logging.info("返回: 不可控 (字符串)")
-                return False
-            logging.debug("是否字符串: 否")
+		改为参数列表循环
+		"""
+		params = re.findall(r"\(.*\);", self.code)
+		params = re.split('\+|,',params[0].strip('();'))
+		for param_name in params:
+			if len(param_name) == 1:
+				param_name = param_name[0].strip()
+				param_name = re.escape(param_name)
+				self.param_name = param_name
+				logging.debug('参数: `{0}`'.format(param_name))
+				# 固定字符串判断
+				regex_string = self.regex[self.language]['string']
+				string = re.findall(regex_string, param_name)
+				if len(string) >= 1 and string[0] != '':
+					logging.debug("是否字符串: 是")
+					logging.info("返回: 不可控 (字符串)")
+					#return False
+					continue
+				logging.debug("是否字符串: 否")
 
-            # 变量判断
-            if param_name[:1] == '$':
-                logging.debug("参数是否变量: 是")
+				# 变量判断
+				if param_name[:1] == '$':
+					logging.debug("参数是否变量: 是")
 
-                # 获取参数赋值代码块
-                param_block_code = self.block_code(0)
-                if param_block_code is False:
-                    logging.debug("向上搜索参数区块代码: 未找到")
-                    logging.info("返回: 可控 (代码未找到)")
-                    return True
-                logging.debug("向上搜索参数区块代码: {0}".format(param_block_code))
+					# 获取参数赋值代码块
+					param_block_code = self.block_code(0)
+					if param_block_code is False:
+						logging.debug("向上搜索参数区块代码: 未找到")
+						logging.info("返回: 可控 (代码未找到)")
+						return True
+					logging.debug("向上搜索参数区块代码: {0}".format(param_block_code))
 
-                # 外部取参赋值
-                """
-                # Need match
-                $url = $_GET['test'];
-                $url = $_POST['test'];
-                $url = $_REQUEST['test'];
-                $url = $_SERVER['user_agent'];
-                # Don't match
-                $url = $_SERVER
-                $url = $testsdf;
-                """
-                regex_get_param = r'(\{0}\s*=\s*\$_[GET|POST|REQUEST|SERVER]+(?:\[))'.format(param_name)
-                regex_get_param_result = re.findall(regex_get_param, param_block_code)
-                if len(regex_get_param_result) >= 1:
-                    self.param_value = regex_get_param_result[0]
-                    logging.debug("参数是否直接取自外部: 是")
-                    logging.info("返回: 可控(取外部入参)")
-                    return True
-                logging.debug("参数是否直接取自外部入参: 否")
+					# 外部取参赋值
+					"""
+					# Need match
+					$url = $_GET['test'];
+					$url = $_POST['test'];
+					$url = $_REQUEST['test'];
+					$url = $_SERVER['user_agent'];
+					# Don't match
+					$url = $_SERVER
+					$url = $testsdf;
+					"""
+					regex_get_param = r'(\{0}\s*=\s*\$_[GET|POST|REQUEST|SERVER]+(?:\[))'.format(param_name)
+					regex_get_param_result = re.findall(regex_get_param, param_block_code)
+					if len(regex_get_param_result) >= 1:
+						self.param_value = regex_get_param_result[0]
+						logging.debug("参数是否直接取自外部: 是")
+						logging.info("返回: 可控(取外部入参)")
+						return True
+					logging.debug("参数是否直接取自外部入参: 否")
 
-                # 函数入参
-                regex_function_param = r'(function\s*\w+\s*\(.*\{0})'.format(param_name)
-                regex_function_param_result = re.findall(regex_function_param, param_block_code)
-                if len(regex_function_param_result) >= 1:
-                    self.param_value = regex_function_param_result[0]
-                    logging.debug("参数是否函数入参: 是")
-                    logging.info("返回: 可控(函数入参)")
-                    return True
-                logging.debug("参数是否直接函数入参: 否")
+					# 函数入参
+					regex_function_param = r'(function\s*\w+\s*\(.*\{0})'.format(param_name)
+					regex_function_param_result = re.findall(regex_function_param, param_block_code)
+					if len(regex_function_param_result) >= 1:
+						self.param_value = regex_function_param_result[0]
+						logging.debug("参数是否函数入参: 是")
+						logging.info("返回: 可控(函数入参)")
+						return True
+					logging.debug("参数是否直接函数入参: 否")
 
-                # 常量赋值
-                uc_rule = r'\{0}\s?=\s?([A-Z_]*)'.format(param_name)
-                uc_rule_result = re.findall(uc_rule, param_block_code)
-                if len(uc_rule_result) >= 1:
-                    logging.debug("参数变量是否直接赋值常量: 是 `{0} = {1}`".format(param_name, uc_rule_result[0]))
-                    logging.info("返回: 不可控")
-                    return False
-                logging.debug("参数变量是否直接赋值常量: 否")
+					# 常量赋值
+					uc_rule = r'\{0}\s?=\s?([A-Z_]*)'.format(param_name)
+					uc_rule_result = re.findall(uc_rule, param_block_code)
+					if len(uc_rule_result) >= 1:
+						logging.debug("参数变量是否直接赋值常量: 是 `{0} = {1}`".format(param_name, uc_rule_result[0]))
+						logging.info("返回: 不可控")
+						#return False
+						continue
+					logging.debug("参数变量是否直接赋值常量: 否")
 
-                # 固定字符串判断
-                regex_assign_string = self.regex[self.language]['assign_string'].format(param_name)
-                string = re.findall(regex_assign_string, param_block_code)
-                if len(string) >= 1 and string[0] != '':
-                    logging.debug("是否赋值字符串: 是")
-                    logging.info("返回: 不可控 (字符串)")
-                    return False
-                logging.debug("是否赋值字符串: 否")
+					# 固定字符串判断
+					regex_assign_string = self.regex[self.language]['assign_string'].format(param_name)
+					string = re.findall(regex_assign_string, param_block_code)
+					if len(string) >= 1 and string[0] != '':
+						logging.debug("是否赋值字符串: 是")
+						logging.info("返回: 不可控 (字符串)")
+						#return False
+						continue
+					logging.debug("是否赋值字符串: 否")
 
-                logging.info("返回: 可控(默认情况)")
-                return True
-            else:
-                if self.language == 'java':
-                    # Java 变量就是没有$
-                    param_block_code = self.block_code(0)
-                    if param_block_code is False:
-                        logging.debug("向上搜索参数区块代码: 未找到")
-                        logging.info("返回: 可控 (代码未找到)")
-                        return True
-                    logging.debug("向上搜索参数区块代码: {0}".format(param_block_code))
-                    regex_assign_string = self.regex[self.language]['assign_string'].format(param_name)
-                    string = re.findall(regex_assign_string, param_block_code)
-                    if len(string) >= 1 and string[0] != '':
-                        logging.debug("是否赋值字符串: 是")
-                        logging.info("返回: 不可控 (字符串)")
-                        return False
-                    logging.debug("是否赋值字符串: 否")
+					logging.info("返回: 可控(默认情况)")
+					return True
+				else:
+					if self.language == 'java':
+						# Java 变量就是没有$
+						param_block_code = self.block_code(0)
+						if param_block_code is False:
+							logging.debug("向上搜索参数区块代码: 未找到")
+							logging.info("返回: 可控 (代码未找到)")
+							return True
+						logging.debug("向上搜索参数区块代码: {0}".format(param_block_code))
+						regex_assign_string = self.regex[self.language]['assign_string'].format(param_name)
+						string = re.findall(regex_assign_string, param_block_code)
+						if len(string) >= 1 and string[0] != '':
+							logging.debug("是否赋值字符串: 是")
+							logging.info("返回: 不可控 (字符串)")
+							#return False
+							continue
+						logging.debug("是否赋值字符串: 否")
 
-                    # 是否取外部参数
-                    regex_get_param = r'String\s{0}\s=\s\w+\.getParameter(.*)'.format(param_name)
-                    get_param = re.findall(regex_get_param, param_block_code)
-                    if len(get_param) >= 1 and get_param[0] != '':
-                        logging.debug("是否赋值外部取参: 是")
-                        logging.info("返回: 不可控 (外部取参)")
-                        return False
-                    logging.debug("是否赋值外部取参: 否")
-
-                    logging.info("返回: 可控 (变量赋值)")
-                    return True
-                logging.debug("参数是否变量: 否 (没有包含$)")
-                logging.info("返回: 不可控(参数不为变量)")
-                return False
-        else:
-            logging.warning("未获取到参数名,请检查定位规则")
+						# 是否取外部参数
+						regex_get_param = r'String\s{0}\s=\s\w+\.getParameter(.*)'.format(param_name)
+						get_param = re.findall(regex_get_param, param_block_code)
+						if len(get_param) >= 1 and get_param[0] != '':
+							logging.debug("是否赋值外部取参: 是")
+							logging.info("返回: 不可控 (外部取参)")
+							#return False
+							continue
+						logging.debug("是否赋值外部取参: 否")
+						logging.info("返回: 可控 (变量赋值)")
+						return True
+					logging.debug("参数是否变量: 否 (没有包含$)")
+					logging.info("返回: 不可控(参数不为变量)")
+					#return False
+					continue
+			else:
+				logging.warning("未获取到参数名,请检查定位规则")
 
     def is_repair(self, repair_rule, block_repair):
         """
