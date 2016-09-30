@@ -100,11 +100,13 @@ class Core:
         :return: boolean
         """
         match_result = re.findall(r"(#|\\\*|\/\/|\*)+", self.code_content)
+		"""
         # 仅仅匹配时跳过检测
         if self.is_match_only_rule():
             return False
         else:
-            return len(match_result) > 0
+		"""
+        return len(match_result) > 0
 
     def is_can_parse(self):
         """
@@ -285,10 +287,12 @@ class Core:
         else:
             found_vul = False
             # 判断参数是否可控
-            if self.is_can_parse() and self.rule_repair.strip() != '':
+            #if self.is_can_parse() and self.rule_repair.strip() != '':
+            if self.is_can_parse():
                 try:
                     parse_instance = parse.Parse(self.rule_location, self.file_path, self.line_number, self.code_content)
                     if parse_instance.is_controllable_param():
+					"""
                         if parse_instance.is_repair(self.rule_repair, self.block_repair):
                             logging.info("Static: repaired")
                             # 标记已修复
@@ -297,6 +301,8 @@ class Core:
                             return True, 1003
                         else:
                             found_vul = True
+					"""
+						found_vul = True
                     else:
                         logging.info("参数不可控")
                         return False, 4004
