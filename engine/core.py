@@ -292,7 +292,7 @@ class Core:
                 try:
                     parse_instance = parse.Parse(self.rule_location, self.file_path, self.line_number, self.code_content)
                     if parse_instance.is_controllable_param():
-					"""
+                        """
                         if parse_instance.is_repair(self.rule_repair, self.block_repair):
                             logging.info("Static: repaired")
                             # 标记已修复
@@ -301,8 +301,8 @@ class Core:
                             return True, 1003
                         else:
                             found_vul = True
-					"""
-						found_vul = True
+                        """
+                        found_vul = True
                     else:
                         logging.info("参数不可控")
                         return False, 4004
