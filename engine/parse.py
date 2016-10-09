@@ -184,9 +184,7 @@ class Parse:
         params = re.split('\+|,',params[0].strip('();'))
         for param_name in params:
             if param_name != '':
-                param_name = param_name[0].strip()
-                param_name = re.escape(param_name)
-                self.param_name = param_name
+                param_name = param_name.strip()
                 logging.debug('参数: `{0}`'.format(param_name))
                 # 固定字符串判断
                 regex_string = self.regex[self.language]['string']
