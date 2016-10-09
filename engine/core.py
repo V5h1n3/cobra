@@ -100,12 +100,12 @@ class Core:
         :return: boolean
         """
         match_result = re.findall(r"(#|\\\*|\/\/|\*)+", self.code_content)
-		"""
+        """
         # 仅仅匹配时跳过检测
         if self.is_match_only_rule():
             return False
         else:
-		"""
+        """
         return len(match_result) > 0
 
     def is_can_parse(self):
