@@ -183,7 +183,7 @@ class Parse:
         params = re.findall(r"\(.*\);", self.code)
         params = re.split('\+|,',params[0].strip('();'))
         for param_name in params:
-            if len(param_name) == 1:
+            if param_name != '':
                 param_name = param_name[0].strip()
                 param_name = re.escape(param_name)
                 self.param_name = param_name
