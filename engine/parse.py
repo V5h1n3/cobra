@@ -278,7 +278,7 @@ class Parse:
                         logging.debug("是否赋值字符串: 否")
 
                         # 是否取外部参数
-                        regex_get_param = r'String\s{0}\s=\s\w+\.getParameter(.*)'.format(param_name)
+                        regex_get_param = r'\s{0}\s=\s\w+\.getParameter(.*)'.format(param_name)
                         get_param = re.findall(regex_get_param, param_block_code)
                         if len(get_param) >= 1 and get_param[0] != '':
                             logging.debug("是否赋值外部取参: 是")
